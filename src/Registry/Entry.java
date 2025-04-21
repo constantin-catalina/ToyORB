@@ -12,10 +12,14 @@ public class Entry implements Address
 		destinationId = theDest;
 		portNr = thePort;
 	}
+
+	@Override
 	public String dest()
 	{
 		return destinationId;
 	}
+
+	@Override
 	public int port()
 	{
 		return portNr;

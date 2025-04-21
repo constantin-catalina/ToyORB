@@ -1,6 +1,6 @@
-import ToyORB.*;
+package Applications.Info;
 
-import Applications.Info.*;
+import ToyORB.*;
 
 public class InfoServer {
 
@@ -8,6 +8,6 @@ public class InfoServer {
 
         InfoImpl infoImpl = new InfoImpl();
 
-        ToyORB.register("info", infoImpl);
+        ToyORB.register("InfoService", infoImpl);
     }
 }

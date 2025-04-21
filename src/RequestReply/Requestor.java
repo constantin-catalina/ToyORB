@@ -24,8 +24,7 @@ public class Requestor
 	{
 		byte[] buffer = null;
 		int val;
-		try
-		{
+		try {
 			s = new Socket(theDest.dest(), theDest.port());
 			System.out.println("Requestor: Socket"+s);
 			oStr = s.getOutputStream();
@@ -38,12 +37,10 @@ public class Requestor
 			iStr.close();
 			oStr.close();
 			s.close();
-		}
-		catch (IOException e) { 
+		} catch (IOException e) {
 			System.out.println("IOException in deliver_and_wait_feedback");
 		}
 		return buffer;
 	}
-
 }
 
