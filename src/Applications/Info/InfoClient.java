@@ -1,23 +1,18 @@
 package Applications.Info;
 
-import NamingServer.NamingServerHelper;
 import ToyORB.*;
-import Proxy.*;
-import Registry.*;
 
 public class InfoClient {
+    public static void main(String[] args) {
+        InfoProxyFactories.InfoClientProxyFactory clientProxyFactory =
+                new InfoProxyFactories.InfoClientProxyFactory();
 
-    public static void main(String[] args){
+        Info info = ToyORB.lookupService("InfoService", clientProxyFactory);
 
-        NamingServerHelper namingClient = new NamingServerHelper();
-        Entry serviceEntry = namingClient.lookupService("InfoService");
-
-        if (serviceEntry == null) {
-            System.out.println("InfoService not found in NamingService");
+        if (info == null) {
+            System.out.println("InfoService not found");
             return;
         }
-
-        Info info = new InfoProxy("InfoService", serviceEntry);
 
         String city = "Brasov";
         String temp = info.get_temp(city);

@@ -18,6 +18,27 @@ public class NamingServerHelper {
         this.marshaller = new Marshaller();
     }
 
+    public int requestPort() {
+        String request = "requestPort";
+        Message message = new Message("Client", request);
+        byte[] requestBytes = marshaller.marshal(message);
+
+        byte[] responseBytes = requestor.deliver_and_wait_feedback(NAMING_SERVICE_ENTRY, requestBytes);
+        Message response = marshaller.unmarshal(responseBytes);
+
+        if (response.data.startsWith("Error")) {
+            System.out.println("Port request failed: " + response.data);
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(response.data);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid port response: " + response.data);
+            return -1;
+        }
+    }
+
     public boolean registerService(String serviceName, String host, int port) {
         String request = "register:" + serviceName + ":" + host + "," + port;
         Message message = new Message("Client", request);

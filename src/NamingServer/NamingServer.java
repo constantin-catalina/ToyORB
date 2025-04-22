@@ -3,7 +3,7 @@ package NamingServer;
 import Registry.Registry;
 import Registry.Entry;
 import RequestReply.Replyer;
-import RequestReply.ByteStreamTransformer;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,13 +16,13 @@ public class NamingServer {
 
     public NamingServer() {
         registry = Registry.instance();
-        Entry serviceEntry = new Entry(HOST, PORT);
-        replyer = new Replyer("NamingService", serviceEntry);
+        Entry serverEntry = new Entry(HOST, PORT);
+        replyer = new Replyer("NamingServer", serverEntry);
         executor = Executors.newSingleThreadExecutor();
     }
 
     public void start() {
-        System.out.println("NamingService started on " + HOST + ":" + PORT);
+        System.out.println("NamingServer started on " + HOST + ":" + PORT);
 
         executor.submit(() -> {
             while (true) {
@@ -32,7 +32,7 @@ public class NamingServer {
     }
 
     public static void main(String[] args) {
-        NamingServer namingService = new NamingServer();
-        namingService.start();
+        NamingServer namingServer = new NamingServer();
+        namingServer.start();
     }
 }

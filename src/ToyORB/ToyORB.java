@@ -1,65 +1,60 @@
 package ToyORB;
 
-import Commons.Address;
 import MessageMarshaller.Marshaller;
 import MessageMarshaller.Message;
-import Applications.Info.*;
-import RequestReply.Requestor;
 import RequestReply.Replyer;
 import RequestReply.ByteStreamTransformer;
 import Registry.Entry;
 import Registry.Registry;
-import Proxy.*;
+import NamingServer.NamingServerHelper;
 
 public class ToyORB {
+    private static final Marshaller marshaller = new Marshaller();
+    private static final NamingServerHelper namingClient = new NamingServerHelper();
 
-    private static Registry registry = Registry.instance();
-    private static Marshaller marshaller = new Marshaller();
+    public static boolean registerService(String serviceName, Object impl, ServerProxyFactory serverProxyFactory) {
+        String host = "localhost";
+        int port = namingClient.requestPort();
 
-    public static void register(String name, Object o) {
-        int port = 2000;
-        Entry entry = new Entry("localhost", port);
-        registry.put(name, entry);
+        if (port == -1) {
+            System.out.println("Failed to get a port from the naming service");
+            return false;
+        }
 
-        new Thread(() -> {
-            Replyer replyer = new Replyer(name, entry);
-            while (true) {
-                replyer.receive_transform_and_send_feedback(input -> {
-                    Message msg = marshaller.unmarshal(input);
-                    String response = invokeMethod(msg.data, o);
-                    return marshaller.marshal(new Message(name, response));
-                });
-            }
-        }).start();
+        boolean registered = namingClient.registerService(serviceName, host, port);
+
+        if (registered) {
+            final ServerProxy serverProxy = serverProxyFactory.createServerProxy(impl);
+
+            new Thread(() -> {
+                Entry serviceEntry = new Entry(host, port);
+                Replyer replyer = new Replyer(serviceName, serviceEntry);
+
+                System.out.println(serviceName + " started on " + host + ":" + port);
+
+                while (true) {
+                    replyer.receive_transform_and_send_feedback(new ByteStreamTransformer() {
+                        @Override
+                        public byte[] transform(byte[] in) {
+                            return serverProxy.processRequest(in);
+                        }
+                    });
+                }
+            }).start();
+            return true;
+        }
+        return false;
     }
 
-    public static Object getObjectRef(String name) {
-        Entry entry = registry.get(name);
-        if (entry == null) {
-            System.out.println("Service with name " + name + " not found in registry.");
+    public static <T> T lookupService(String serviceName, ClientProxyFactory<T> clientProxyFactory) {
+        Entry serviceEntry = namingClient.lookupService(serviceName);
+
+        if (serviceEntry == null) {
+            System.out.println("Service '" + serviceName + "' not found in NamingService");
             return null;
         }
-        return new InfoProxy(name, entry);
+
+        return clientProxyFactory.createClientProxy(serviceName, serviceEntry);
     }
 
-    private static String invokeMethod(String request, Object impl) {
-        try {
-            String[] parts = request.split(":");
-            String method = parts[0];
-            String arg = parts.length > 1 ? parts[1] : "";
-
-            if (impl instanceof Applications.Info.Info) {
-                Applications.Info.Info info = (Applications.Info.Info) impl;
-                switch (method) {
-                    case "get_temp":
-                        return info.get_temp(arg);
-                    case "get_road_info":
-                        return info.get_road_info(Integer.parseInt(arg));
-                }
-            }
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
-        }
-        return "Unknown method.";
-    }
 }
